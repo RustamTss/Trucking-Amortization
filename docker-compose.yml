@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: trucking_db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secure_password
+      MONGO_INITDB_DATABASE: trucking_db
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - trucking_network
+    restart: unless-stopped
+
+  backend:
+    build: .
+    container_name: trucking_backend
+    environment:
+      - MONGO_URI=mongodb://admin:secure_password@mongodb:27017/trucking_db?authSource=admin
+      - JWT_SECRET=your_super_secret_jwt_key_change_in_production_2024
+      - PORT=8080
+      - DATABASE_NAME=trucking_db
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+    networks:
+      - trucking_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: trucking_frontend
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - trucking_network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+
+networks:
+  trucking_network:
+    driver: bridge 
