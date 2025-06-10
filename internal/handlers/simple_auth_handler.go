@@ -20,6 +20,7 @@ func NewSimpleAuthHandler(userService *services.SimpleUserService, jwtSecret str
 	}
 }
 
+// Register обрабатывает регистрацию нового пользователя
 func (h *SimpleAuthHandler) Register(c *fiber.Ctx) error {
 	var req models.SimpleUserRegisterRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -28,10 +29,10 @@ func (h *SimpleAuthHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-	// Базовая валидация
+	// Валидация
 	if req.Email == "" || req.Password == "" || req.Name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Email, password and name are required",
+			"error": "Email, password, and name are required",
 		})
 	}
 
@@ -56,6 +57,7 @@ func (h *SimpleAuthHandler) Register(c *fiber.Ctx) error {
 	})
 }
 
+// Login обрабатывает аутентификацию пользователя
 func (h *SimpleAuthHandler) Login(c *fiber.Ctx) error {
 	var req models.SimpleUserLoginRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -64,7 +66,7 @@ func (h *SimpleAuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// Базовая валидация
+	// Валидация
 	if req.Email == "" || req.Password == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Email and password are required",
@@ -90,7 +92,6 @@ func (h *SimpleAuthHandler) Login(c *fiber.Ctx) error {
 		ID:        user.ID,
 		Email:     user.Email,
 		Name:      user.Name,
-		Companies: user.Companies,
 		CreatedAt: user.CreatedAt,
 	}
 
@@ -100,7 +101,8 @@ func (h *SimpleAuthHandler) Login(c *fiber.Ctx) error {
 	})
 }
 
-func (h *SimpleAuthHandler) Me(c *fiber.Ctx) error {
+// GetProfile возвращает профиль текущего пользователя
+func (h *SimpleAuthHandler) GetProfile(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 
 	user, err := h.userService.GetByID(userID)

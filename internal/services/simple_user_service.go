@@ -2,31 +2,23 @@ package services
 
 import (
 	"errors"
-	"fmt"
-	"sync"
 	"time"
 	"trucking-amortization/internal/models"
 	"trucking-amortization/pkg/utils"
 )
 
+// Простая in-memory реализация для демонстрации
 type SimpleUserService struct {
-	users     map[string]*models.SimpleUser
-	mutex     sync.RWMutex
-	idCounter int
+	users []models.SimpleUser
 }
 
 func NewSimpleUserService() *SimpleUserService {
 	return &SimpleUserService{
-		users:     make(map[string]*models.SimpleUser),
-		mutex:     sync.RWMutex{},
-		idCounter: 1,
+		users: make([]models.SimpleUser, 0),
 	}
 }
 
 func (s *SimpleUserService) Register(req *models.SimpleUserRegisterRequest) (*models.SimpleUserResponse, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
 	// Проверяем, существует ли пользователь с таким email
 	for _, user := range s.users {
 		if user.Email == req.Email {
@@ -41,81 +33,52 @@ func (s *SimpleUserService) Register(req *models.SimpleUserRegisterRequest) (*mo
 	}
 
 	// Создаем нового пользователя
-	userID := fmt.Sprintf("%d", s.idCounter)
-	s.idCounter++
-
-	user := &models.SimpleUser{
-		ID:        userID,
+	user := models.SimpleUser{
+		ID:        "user_" + req.Email, // Простой ID для демонстрации
 		Email:     req.Email,
 		Password:  hashedPassword,
 		Name:      req.Name,
-		Companies: []string{},
 		CreatedAt: time.Now(),
 	}
 
-	s.users[userID] = user
+	s.users = append(s.users, user)
 
 	return &models.SimpleUserResponse{
 		ID:        user.ID,
 		Email:     user.Email,
 		Name:      user.Name,
-		Companies: user.Companies,
 		CreatedAt: user.CreatedAt,
 	}, nil
 }
 
 func (s *SimpleUserService) Login(req *models.SimpleUserLoginRequest) (*models.SimpleUser, error) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	// Ищем пользователя по email
 	for _, user := range s.users {
 		if user.Email == req.Email {
 			// Проверяем пароль
 			if !utils.CheckPasswordHash(req.Password, user.Password) {
 				return nil, errors.New("invalid credentials")
 			}
-			return user, nil
+			return &user, nil
 		}
 	}
-
 	return nil, errors.New("invalid credentials")
 }
 
 func (s *SimpleUserService) GetByID(userID string) (*models.SimpleUserResponse, error) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	user, exists := s.users[userID]
-	if !exists {
-		return nil, errors.New("user not found")
+	for _, user := range s.users {
+		if user.ID == userID {
+			return &models.SimpleUserResponse{
+				ID:        user.ID,
+				Email:     user.Email,
+				Name:      user.Name,
+				CreatedAt: user.CreatedAt,
+			}, nil
+		}
 	}
-
-	return &models.SimpleUserResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		Name:      user.Name,
-		Companies: user.Companies,
-		CreatedAt: user.CreatedAt,
-	}, nil
+	return nil, errors.New("user not found")
 }
 
 func (s *SimpleUserService) AddCompanyToUser(userID string, companyID string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	user, exists := s.users[userID]
-	if !exists {
-		return errors.New("user not found")
-	}
-
-	// Проверяем, не добавлена ли уже компания
-	for _, id := range user.Companies {
-		if id == companyID {
-			return nil // Уже добавлена
-		}
-	}
-
-	user.Companies = append(user.Companies, companyID)
-	return nil
+	// Implementation needed
+	return errors.New("method not implemented")
 }
