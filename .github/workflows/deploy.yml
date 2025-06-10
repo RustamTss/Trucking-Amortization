@@ -1,0 +1,57 @@
+
+name: Deploy to VPS
+
+on:
+
+  push:
+
+    branches: [ main ]
+
+jobs:
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    
+
+    steps:
+
+    - uses: actions/checkout@v3
+
+    
+
+    - name: Deploy to VPS
+
+      uses: appleboy/ssh-action@v0.1.5
+
+      with:
+
+        host: 165.232.113.23
+
+        username: root
+
+        password: ${{ secrets.VPS_PASSWORD }}
+
+        script: |
+
+          cd /var/www/trucking
+
+          git pull origin main
+
+          docker-compose down
+
+          docker-compose build
+
+          docker-compose up -d
+
+          
+
+    - name: Health Check
+
+      run: |
+
+        sleep 30
+
+        curl -f http://165.232.113.23 || exit 1
+
