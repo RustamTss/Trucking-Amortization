@@ -30,4 +30,6 @@ require (
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-) 
+)
+
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.13.0
